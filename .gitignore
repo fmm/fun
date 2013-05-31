@@ -1,4 +1,5 @@
 # Compiled Object files
+*.class
 *.slo
 *.lo
 *.o
@@ -11,3 +12,8 @@
 *.lai
 *.la
 *.a
+
+# Package Files #
+*.jar
+*.war
+*.ear
