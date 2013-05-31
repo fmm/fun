@@ -76,9 +76,9 @@ struct state {
 		rep(i,R) puts(a[i]); puts("~");
 	}
 	bool operator<(state s) const {
-    rep(i,R) rep(j,C) if(a[i][j]!=s.a[i][j]) return a[i][j]<s.a[i][j];
-    return false;
-  }
+		rep(i,R) rep(j,C) if(a[i][j]!=s.a[i][j]) return a[i][j]<s.a[i][j];
+		return false;
+	}
 };
 
 const bool debug=false;
@@ -103,24 +103,24 @@ void go(int ii, int jj) {
 	}
 	memcpy(mask,work,sizeof work);
 	state at(work), tmp;
-  for(;;) {
+	for(;;) {
 		int ok=0;
-    #define DOWN  {tmp=at;if(tmp.move_down()) ok=1, at=tmp;}
-    #define LEFT  {tmp=at;if(tmp.move_left()) at=tmp; else break;}
-    #define RIGHT {tmp=at;if(tmp.move_right()) at=tmp; else break;}
-    rep(i,C+1) rep(j,C+1) {
-      rep(x,i) { LEFT; }
-      rep(x,j) { RIGHT; }
-      DOWN;
-    }
-    rep(i,C+1) rep(j,C+1) {
-      rep(x,j) { RIGHT; }
-      rep(x,i) { LEFT; }
-      DOWN;
-    }
+#define DOWN  {tmp=at;if(tmp.move_down()) ok=1, at=tmp;}
+#define LEFT  {tmp=at;if(tmp.move_left()) at=tmp; else break;}
+#define RIGHT {tmp=at;if(tmp.move_right()) at=tmp; else break;}
+		rep(i,C+1) rep(j,C+1) {
+			rep(x,i) { LEFT; }
+			rep(x,j) { RIGHT; }
+			DOWN;
+		}
+		rep(i,C+1) rep(j,C+1) {
+			rep(x,j) { RIGHT; }
+			rep(x,i) { LEFT; }
+			DOWN;
+		}
 		if(!ok) break;
 	}
-	
+
 	int lucky=at.cx()==1;
 	at=state(mask);
 	printf("%c: %d %s\n",cave[ii][jj],at.cx(),lucky?"Lucky":"Unlucky");
