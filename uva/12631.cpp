@@ -104,7 +104,7 @@ int main() {
 		}
 #ifdef GENERATE
 		assert(A==stupid(-1)%mod);
-		assert(B=stupid(K)%mod);
+		assert(B==stupid(K)%mod);
 #endif
 		printf("Case %d: %lld %lld\n",testcase,A,B);
 	}
