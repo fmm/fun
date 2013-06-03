@@ -13,64 +13,60 @@ template<class T> void pv(T a, T b) { for (T i = a; i != b; ++i) cout << *i << "
 typedef long long ll;
 typedef pair<int,int> pii;
 
-#define REP(i,a,b) for(i=a;i<b;i++)
-#define EPS 1e-10
-#define PI 3.141592653589793238462
+#define PI	M_PI
+#define TWOPI	(2.0*PI)
+#define double float
 
-// laycurse's fft
-
-/* pnt denotes complex numbers: x=real part, y=imaginary part */
-typedef struct struct_point{double x,y;}pnt;
-
-pnt pntPlus(pnt a,pnt b){a.x+=b.x; a.y+=b.y; return a;}
-pnt pntMinus(pnt a,pnt b){a.x-=b.x; a.y-=b.y; return a;}
-pnt pntMultiple(pnt a,pnt b){pnt c; c.x=a.x*b.x-a.y*b.y; c.y=a.x*b.y+a.y*b.x; return c;}
-pnt pntMultipleDouble(pnt a,double k){a.x*=k; a.y*=k; return a;}
-
-pnt pntPolar(double r,double t){pnt a; a.x=r*cos(t); a.y=r*sin(t); return a;} /* r * exp(i*t), i=sqrt(-1) */
-pnt pntGenerator(double x,double y){pnt res; res.x=x; res.y=y; return res;}   /* x + i*y */
-
-/* Fast Fourier Transform */
-/* n = size of a = a power of 2, theta = 2*PI/n */
-/* for inverse fft, theta = -2*PI/n */
-void fft(int n, double theta, pnt a[]){
-	int i, j, k, m, mh;
-	pnt w, x;
-	for(m=n; m>=2; m/=2){
-		mh = m / 2;
-		rep(i,mh){
-			w = pntPolar(1, i*theta);
-			for(j=i; j<n; j+=m){
-				k = j+mh;
-				x = pntMinus(a[j], a[k]);
-				a[j] = pntPlus(a[j], a[k]);
-				a[k] = pntMultiple(w, x);
-			}
+void fast_fft(double data[], int nn, int isign) {
+	int n, mmax, m, j, istep, i;
+	double wtemp, wr, wpr, wpi, wi, theta;
+	double tempr, tempi;
+	n = nn << 1;
+	j = 1;
+	for (i = 1; i < n; i += 2) {
+		if (j > i) {
+			tempr = data[j];     data[j] = data[i];     data[i] = tempr;
+			tempr = data[j+1]; data[j+1] = data[i+1]; data[i+1] = tempr;
 		}
-		theta *= 2;
+		m = n >> 1;
+		while (m >= 2 && j > m) {
+			j -= m;
+			m >>= 1;
+		}
+		j += m;
 	}
-	i = 0;
-	REP(j,1,n-1){
-		for(k=n/2; k > (i ^= k); k/=2);
-		if(j < i) w=a[i], a[i]=a[j], a[j]=w;
+	mmax = 2;
+	while (n > mmax) {
+		istep = 2*mmax;
+		theta = TWOPI/(isign*mmax);
+		wtemp = sin(0.5*theta);
+		wpr = -2.0*wtemp*wtemp;
+		wpi = sin(theta);
+		wr = 1.0;
+		wi = 0.0;
+		for (m = 1; m < mmax; m += 2) {
+			for (i = m; i <= n; i += istep) {
+				j =i + mmax;
+				tempr = wr*data[j]   - wi*data[j+1];
+				tempi = wr*data[j+1] + wi*data[j];
+				data[j]   = data[i]   - tempr;
+				data[j+1] = data[i+1] - tempi;
+				data[i] += tempr;
+				data[i+1] += tempi;
+			}
+			wr = (wtemp = wr)*wpr - wi*wpi + wr;
+			wi = wi*wpr + wtemp*wpi + wi;
+		}
+		mmax = istep;
 	}
 }
 
-const int maxn=(65536*2);
+const int maxn=(65536);
 int x[maxn],y[maxn];
 int R,C,N;
-int row[maxn],column[maxn],diagonal[maxn];
-pnt a[maxn], b[maxn];
-int cd[maxn];
-
-void pre(int n, pnt a[]) {
-	fft(n,2*PI/n,a);
-}
-
-void doit(int n, pnt a[], pnt b[]) {
-	rep(i,n) a[i] = pntMultiple(a[i],b[i]);
-	fft(n,-2*PI/n,a);
-}
+int row[maxn],column[maxn],diagonal[maxn<<1];
+double a[maxn<<3], b[maxn<<3];
+int cd[maxn<<1];
 
 int main() {
 	cin.sync_with_stdio(false);
@@ -90,32 +86,33 @@ int main() {
 			column[y[i]]=R;
 			int d=x[i]+y[i];
 			if(!diagonal[d]) {
-				int d1=0;
-				for(int dd=max(R,C);dd>0;) {
-					int nd1=d1+dd;
-					if(x[i]+nd1<=R&&y[i]-nd1>=1) d1=nd1;
-					else dd/=2;
-				}
-				int d2=0;
-				for(int dd=max(R,C);dd>0;) {
-					int nd2=d2+dd;
-					if(x[i]-nd2>=1&&y[i]+nd2<=C) d2=nd2;
-					else dd/=2;
-				}
+			  int d1 = min(R - x[i], y[i] - 1);
+			  int d2 = min(C - y[i], x[i] - 1);
 				diagonal[d]=1+d1+d2;
 			}
 		}
-		rep(i,maxn) a[i] = pntGenerator((i<=R&&row[i]>0),0);
-		rep(i,maxn) b[i] = pntGenerator((i<=C&&column[i]>0),0);
 		rep(i,R+C+1) cd[i] = 0;
 		rep(i,R+1) if(row[i]) cd[i+1] += 1, cd[i+C+1] -= 1;
 		rep(i,C+1) if(column[i]) cd[i+1] += 1, cd[i+R+1] -= 1;
 		rep(i,R+C) cd[i+1] += cd[i];
 		int n=R+C+1;
 		while(n&(n-1))n++;
-		pre(n,a), pre(n,b), doit(n,a,b);
-		rep(i,R+C+1) if(diagonal[i]) {
-			int ways = cd[i] - (int)(a[i].x/n + 0.7777777);
+		for(int i=0;i<n;i++) {
+		  a[2*i+1]=(i<=R&&row[i]>0);
+		  a[2*i+2]=0;
+		  b[2*i+1]=(i<=C&&column[i]>0);
+		  b[2*i+2]=0;
+		}
+		fast_fft(a,n,+1);
+		fast_fft(b,n,+1);
+		for(int i=0;i<n;i++) {
+		  double new_real = a[2*i+1] * b[2*i+1] - a[2*i+2] * b[2*i+2];
+		  double new_imag = a[2*i+1] * b[2*i+2] + a[2*i+2] * b[2*i+1];
+		  a[2*i+1] = new_real, a[2*i+2] = new_imag;
+		}
+		fast_fft(a,n,-1);
+		for(int i=0;i<=R+C;i++) if(diagonal[i]) {
+			int ways = cd[i] - (int)(a[2*i+1]/n + 0.7777777);
 			diagonal[i] -= ways;
 		}
 		long long answer=0, nr=0, nc=0;
